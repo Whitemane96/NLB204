@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chappie Bot</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --bot-bubble: #f8fafc;
+            --user-bubble: #4f46e5;
+            --border: #e2e8f0;
+            --success: #10b981;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 900px;
+            height: 90vh;
+            background: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        /* Header Area */
+        header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Chat Area */
+        #chat-box {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            background-image: radial-gradient(#e2e8f0 0.5px, transparent 0.5px);
+            background-size: 20px 20px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        .bot {
+            align-self: flex-start;
+            background: var(--bot-bubble);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            border-bottom-left-radius: 2px;
+        }
+
+        .user {
+            align-self: flex-end;
+            background: var(--user-bubble);
+            color: white;
+            border-bottom-right-radius: 2px;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+        }
+
+        /* Structured Summary Card */
+        .summary-box {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 10px;
+            color: var(--text-main);
+            font-size: 0.85rem;
+            /* FIXES START HERE */
+            text-align: left;           /* Forces text to the left */
+            white-space: pre-line;      /* Preserves line breaks but wraps normally */
+            word-break: break-word;     /* Prevents long strings from breaking layout */
+            display: block;             /* Ensures it takes full width */
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Input Area */
+        .input-container {
+            padding: 1.5rem 2rem;
+            border-top: 1px solid var(--border);
+            background: #fff;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            background: #f8fafc;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            transition: border-color 0.2s;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: var(--primary);
+        }
+
+        input[type="text"] {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 8px;
+            font-size: 1rem;
+            outline: none;
+            color: var(--text-main);
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: #e2e8f0;
+            color: var(--primary);
+        }
+
+        .send-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .send-btn:hover {
+            background: var(--primary-hover);
+        }
+
+        /* Action Buttons in Summary */
+        .action-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .download-btn {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .reset-btn {
+            background: #64748b;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header>
+        <h1>Chappie Bot</h1>
+        <div id="status-indicator" style="font-size: 0.8rem; color: var(--text-muted);">Ready to process</div>
+    </header>
+
+    <div id="chat-box"><div class="message bot">Hi there! Please upload the client's <strong>BG Sheet.docx</strong> to begin data extraction.</div></div>
+
+    <div class="input-area">
+        <div class="input-wrapper">
+            <input type="file" id="fileInput" style="display:none" onchange="uploadFile()" />
+            <button onclick="document.getElementById('fileInput').click()">📄 Upload File</button>
+            </button>
+            <input type="text" id="userMsg" placeholder="Correct data or ask questions...(e.g: change pay rate to 20)" onkeypress="if(event.key==='Enter') sendMessage()"/>
+            <button class="send-btn" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let sessionId = null;
+    let currentData = null;
+    const chatBox = document.getElementById('chat-box');
+
+    async function startNewSession() {
+        if (sessionId) {
+            // Optional: Notify the server to clear cache
+            await fetch('/clear', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ session_id: sessionId, message: "clear" })
+            });
+        }
+
+        // Reset local variables
+        sessionId = null;
+        currentData = null;
+
+        // Reset UI
+        chatBox.innerHTML = '<div class="message bot">Hi there! Please upload the client\'s <strong>BG Sheet.docx</strong> to begin data extraction.</div>';
+        document.getElementById('userMsg').value = '';
+        document.getElementById('fileInput').value = ''; // Clear the file picker
+    }
+
+    function appendMessage(role, content) {
+        const div = document.createElement('div');
+        div.className = `message ${role}`;
+        div.innerHTML = content;
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    async function uploadFile() {
+        const file = document.getElementById('fileInput').files[0];
+        if(!file) return;
+        appendMessage('user', `Uploaded: ${file.name}`);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const res = await fetch('/upload', { method: 'POST', body: formData });
+        const result = await res.json();
+        sessionId = result.session_id;
+        updateSummary(result.data);
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById('userMsg');
+        const msg = input.value;
+        if(!msg || !sessionId) return;
+        input.value = '';
+        appendMessage('user', msg);
+
+        const res = await fetch('/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: sessionId, message: msg })
+        });
+        const data = await res.json();
+        updateSummary(data);
+    }
+
+    function updateSummary(data) {
+        currentData = data;
+        const weeks = data.total_weeks_violated || 0;
+        const workingDays = data.working_days_per_week || 0;
+        const totalPotentialShifts = weeks * workingDays;
+
+        const rate = data.pay_rate || 0;
+        const mShifts = weeks * (data.meal_violations_per_week || 0);
+        const rShifts = weeks * (data.rest_violations_per_week || 0);
+
+        const mTotal = mShifts * rate;
+        const rTotal = rShifts * rate;
+
+        const schedule = data.pay_period || "Unknown";
+        const nViolations = schedule === "weekly" ? weeks : Math.floor(weeks / 2);
+        const vTotal = nViolations > 0 ? 100 + ((nViolations - 1) * 200) : 0;
+
+        const pSum = mTotal + rTotal + vTotal;
+        const vPercent = pSum * 0.25;
+        const wTotal = nViolations > 0 ? 50 + ((nViolations - 1) * 100) : 0;
+
+        const summaryHtml = `
+            <div class="summary-box">
+                <b>Name</b>: ${data.full_name} (${data.gender}).
+                <b>Company</b>: ${data.company}
+                --------------------------------------------------
+                <strong>AI Narrative for texting purposes:</strong><br>
+                <em>"${data.violation_narrative || "No narrative generated"}"</em>
+                --------------------------------------------------
+                <b>Working Days</b>: ${data.working_days_per_week} per week.
+                <b>Working Hours</b>: ${data.working_hours}
+                <b>Pay Schedule</b>: ${schedule}. <b>Pay Rate</b>: $${rate}.
+                --------------------------------------------------
+                <b>Timeframe Calculated</b>: ${weeks} weeks total.
+                <b>Total Potential Shifts</b>: ${totalPotentialShifts} shifts.
+                <b>Meal Breaks Violations</b>: ${mShifts} shifts = $${mTotal.toFixed(2)}
+                <b>Rest Breaks Violations</b>: ${rShifts} shifts = $${rTotal.toFixed(2)}
+                <b>210 Penalties</b>: ${nViolations} violations = $${vTotal.toFixed(2)}
+                <b>210 Penalties 25% of $${pSum.toFixed(2)}</b> = $${vPercent.toFixed(2)}
+                <b>Wage Statements</b>: ${nViolations} violations = $${wTotal.toFixed(2)}
+                <b>Total = $${(mTotal + rTotal + vTotal + vPercent + wTotal).toFixed(2)}</b>
+                --------------------------------------------------
+                <b>Demand Amount</b>: ${data.demand_amount || "Not found"}
+                <b>Atty Contact Date</b>: ${data.atty_contact_date || "Not found"}
+            </div>
+            <div class="action-group">
+                <button class="download-btn" onclick="generateDoc()">Download Document</button><br>
+                <button class="reset-btn" onclick="startNewSession()" style="width:100%; margin-top:10px; background:#64748b;">Create New Letter</button>
+            </div>
+        `;
+        appendMessage('bot', summaryHtml);
+    }
+
+    async function generateDoc() {
+        const res = await fetch('/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(currentData)
+        });
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Settlement_Letter_${currentData.full_name.replace(/ /g, '_')}.docx`;
+        a.click();
+    }
+</script>
+</body>
+</html>
