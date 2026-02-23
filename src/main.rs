@@ -68,9 +68,7 @@ async fn main() {
     //Deploy
     let port = std::env::var("PORT").unwrap_or_else(|_| "8080".to_string());
     let addr = format!("0.0.0.0:{}", port);
-
     println!("Server listening on {}", addr);
-
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
@@ -164,7 +162,7 @@ async fn generate_handler(Json(data): Json<RawData>) -> Response {
     let meal_total = meal_shifts as f64 * data.pay_rate;
     let rest_total = rest_shifts as f64 * data.pay_rate;
 
-    let num_violations = match data.pay_period.as_deref() {
+    let num_violations = match data.pay_period.as_deref().map(|s| s.to_lowercase()).as_deref() {
         Some("weekly") => weeks,
         Some("biweekly") => weeks / 2,
         _ => 0,
