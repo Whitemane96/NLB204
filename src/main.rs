@@ -60,17 +60,17 @@ async fn main() {
         .with_state(state);
 
     //Local Setup
-    // let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
-    // println!("Server running at http://{}", addr);
-    // let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    // axum::serve(listener, app).await.unwrap();
+    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    println!("Server running at http://{}", addr);
+    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+    axum::serve(listener, app).await.unwrap();
 
     //Deploy
-    let port = std::env::var("PORT").unwrap_or_else(|_| "8080".to_string());
-    let addr = format!("0.0.0.0:{}", port);
-    println!("Server listening on {}", addr);
-    let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    // let port = std::env::var("PORT").unwrap_or_else(|_| "8080".to_string());
+    // let addr = format!("0.0.0.0:{}", port);
+    // println!("Server listening on {}", addr);
+    // let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
+    // axum::serve(listener, app).await.unwrap();
 }
 
 async fn clear_session_handler(
@@ -260,9 +260,13 @@ async fn extract_data(input: &str, context: Option<RawData>) -> RawData {
             ChatCompletionRequestSystemMessageArgs::default()
                 .content(format!("{} Output a JSON object.
                 
-                DYNAMIC NARRATIVE: Generate a 'violation_narrative' sentence. Example: 'However, since the past month, {{title}} {{lastname}} has been denied {{possessive}} meal breaks 1 time per week and all rest breaks per week in violation of California law'. Another example would be if you manage to determine a start date and end date, let's say that the violation has been happening from September 2025 to November 2025, it should say: 'However, from September 2025 to November 2025, {{title}} {{lastname}} has been denied {{possessive}} meal breaks 1 time per week and all rest breaks per week in violation of California law'. In case the gender is non-binary, change the {{title}} for Mx.'
+                DYNAMIC NARRATIVE: Generate a 'violation_narrative' sentence. Example: 'However, since the past month, {{title}} {{lastname}} has been denied {{possessive}} meal breaks (number of days denied) (day or days) per week and rest breaks (number of days denied) (day or days) per week in violation of California law'. Another example would be if you manage to determine a start date and end date, let's say that the violation has been happening from September 2025 to November 2025, it should say: 'However, from September 2025 to November 2025, {{title}} {{lastname}} has been denied {{possessive}} meal breaks (number of times denied) (time for once or times) per week and rest breaks (number of times denied) (time for once or times) per week in violation of California law'. In case there is no specific number of denies, please use 'all' in case the input file says that they were denied every single shift. In case the gender is non-binary, change the {{title}} for Mx.'
 
                 TIMEFRAME CALCULATION: Carefully calculate 'total_weeks_violated' based on the dates provided (e.g., 'Sept 2024 to Nov 2024' is ~13 weeks).
+
+                For meal_violations_per_week: calculate the number of shifts based on the input. Example: if meal breaks were denied every single day for 1 month, it should be: 20 shifts. If the input says 2 times per week in 1 month, it should be: 8 shifts.
+
+                For rest_violations_per_week: calculate the number of shifts based on the input. Example: if rest breaks were denied every single day for 1 month, it should be: 20 shifts. If the input says 2 times per week in 1 month, it should be: 8 shifts.
 
                 For demand_amount: Return as string.
                 For atty_contact_date: Format as YYYY-MM-DD.
