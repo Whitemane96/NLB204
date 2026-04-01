@@ -39,7 +39,7 @@ struct RawData {
     #[serde(default)]
     pub rest_violations_per_week: u32,
     pub pay_period: Option<String>,
-    pub demand_amount: Option<serde_json::Value>,
+    pub demand_amount: Option<f64>,
     pub atty_contact_date: Option<String>,
     pub violation_narrative: Option<String>,
 }
@@ -138,17 +138,6 @@ async fn generate_handler(Json(data): Json<RawData>) -> Response {
         "N/A".to_string()
     };
 
-    let demand_str = match &data.demand_amount {
-        Some(val) => {
-            if val.is_number() {
-                val.to_string()
-            } else {
-                val.as_str().unwrap_or("0.00").to_string()
-            }
-        },
-        None => "0.00".to_string(),
-    };
-
     let (title, pronoun, possessive, verb) = match data.gender.to_lowercase().as_str() {
         "male" => ("Mr.", "he", "his", "is"),
         "female" => ("Ms.", "she", "her", "is"),
@@ -208,7 +197,7 @@ async fn generate_handler(Json(data): Json<RawData>) -> Response {
         "total_sum": format!("{:.2}", total_sum),
 
         "atty_contact_date": formatted_atty_date,
-        "demand_amount": demand_str,
+        "demand_amount": format!("{:.2}", data.demand_amount.unwrap_or(0.0) as f64),
     });
 
     let hb = Handlebars::new();
@@ -268,7 +257,7 @@ async fn extract_data(input: &str, context: Option<RawData>) -> RawData {
 
                 For rest_violations_per_week: calculate the number of shifts based on the input. Example: if rest breaks were denied every single day for 1 month, it should be: 20 shifts. If the input says 2 times per week in 1 month, it should be: 8 shifts.
 
-                For demand_amount: Return as string.
+                For demand_amount: Remove any symbols, keep only numbers with decimals if it has them, if no decimals, add '.00' at the end. Return as a float.
                 For atty_contact_date: Format as YYYY-MM-DD.
                 For pay_period: Use 'weekly' or 'biweekly'.
                 For working_hours: Extract only the digits, strip all text. If the text says '8-hour shift', return 8 as a number.
