@@ -293,6 +293,8 @@
     }
 
     function updateSummary(data) {
+        const roundUp = (num) => Math.ceil(num * 100) / 100;
+
         currentData = data;
         const weeks = data.total_weeks_violated || 0;
         const workingDays = data.working_days_per_week || 0;
@@ -302,16 +304,18 @@
         const mShifts = weeks * (data.meal_violations_per_week || 0);
         const rShifts = weeks * (data.rest_violations_per_week || 0);
 
-        const mTotal = mShifts * rate;
-        const rTotal = rShifts * rate;
+        const mTotal = roundUp(mShifts * rate);
+        const rTotal = roundUp(rShifts * rate);
 
         const schedule = data.pay_period || "Unknown";
         const nViolations = schedule === "weekly" ? weeks : Math.floor(weeks / 2);
         const vTotal = nViolations > 0 ? 100 + ((nViolations - 1) * 200) : 0;
 
-        const pSum = mTotal + rTotal + vTotal;
-        const vPercent = pSum * 0.25;
+        const pSum = mTotal + rTotal;
+        const vPercent = roundUp(pSum * 0.25);
         const wTotal = nViolations > 0 ? 50 + ((nViolations - 1) * 100) : 0;
+
+        const finalTotal = mTotal + rTotal + vTotal + vPercent + wTotal;
 
         const summaryHtml = `
             <div class="summary-box">
@@ -332,7 +336,7 @@
                 <b>210 Penalties</b>: ${nViolations} violations = $${vTotal.toFixed(2)}
                 <b>210 Penalties 25% of $${pSum.toFixed(2)}</b> = $${vPercent.toFixed(2)}
                 <b>Wage Statements</b>: ${nViolations} violations = $${wTotal.toFixed(2)}
-                <b>Total = $${(mTotal + rTotal + vTotal + vPercent + wTotal).toFixed(2)}</b>
+                <b>Total = $${finalTotal.toFixed(2)}</b>
                 --------------------------------------------------
                 <b>Demand Amount</b>: ${data.demand_amount || "Not found"}
                 <b>Atty Contact Date</b>: ${data.atty_contact_date || "Not found"}
